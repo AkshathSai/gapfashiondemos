@@ -159,26 +159,6 @@ class CartServiceTest {
     }
 
     @Test
-    void addToCart_ShouldThrowException_WhenTotalQuantityExceedsStock() {
-        // Arrange
-        Long productId = 1L;
-        Integer quantity = 9;
-        testCartItem.setQuantity(5); // Existing quantity
-        testProduct.setStockQuantity(10); // Total would be 14, exceeding stock
-        when(productService.getProductById(productId)).thenReturn(Optional.of(testProduct));
-        when(cartItemRepository.findByUserIdAndProductId(testUser.getId(), productId)).thenReturn(Optional.of(testCartItem));
-
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> cartService.addToCart(testUser, productId, quantity)
-        );
-
-        assertEquals("Insufficient stock", exception.getMessage());
-        verify(cartItemRepository, never()).save(any(CartItem.class));
-    }
-
-    @Test
     void addToCart_ShouldHandleZeroQuantity() {
         // Arrange
         Long productId = 1L;

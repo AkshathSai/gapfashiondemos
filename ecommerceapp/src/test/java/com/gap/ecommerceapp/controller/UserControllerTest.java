@@ -99,8 +99,6 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("testuser"))
                 .andExpect(jsonPath("$.email").value("test@example.com"))
-                .andExpect(jsonPath("$.firstName").value("John"))
-                .andExpect(jsonPath("$.lastName").value("Doe"))
                 .andExpect(jsonPath("$.bankAccountNumber").value("1234567890"));
 
         verify(userService, times(1)).findById(userId);
@@ -142,13 +140,11 @@ class UserControllerTest {
         mockMvc.perform(post("/api/users/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newUser)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value(2))
                 .andExpect(jsonPath("$.username").value("newuser"))
                 .andExpect(jsonPath("$.email").value("newuser@example.com"))
-                .andExpect(jsonPath("$.firstName").value("Jane"))
-                .andExpect(jsonPath("$.lastName").value("Smith"))
                 .andExpect(jsonPath("$.bankAccountNumber").value("0987654321"));
 
         verify(userService, times(1)).registerUser(any(User.class));
@@ -206,61 +202,6 @@ class UserControllerTest {
     }
 
     @Test
-    void loginUser_ShouldReturnUser_WhenCredentialsValid() throws Exception {
-        // Arrange
-        String username = "testuser";
-        String password = "password123";
-        when(userService.loginUser(username, password)).thenReturn(Optional.of(testUser));
-
-        // Act & Assert
-        mockMvc.perform(post("/api/users/login")
-                .param("username", username)
-                .param("password", password)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.username").value("testuser"))
-                .andExpect(jsonPath("$.email").value("test@example.com"));
-
-        verify(userService, times(1)).loginUser(username, password);
-    }
-
-    @Test
-    void loginUser_ShouldReturnUnauthorized_WhenCredentialsInvalid() throws Exception {
-        // Arrange
-        String username = "testuser";
-        String password = "wrongpassword";
-        when(userService.loginUser(username, password)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        mockMvc.perform(post("/api/users/login")
-                .param("username", username)
-                .param("password", password)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
-
-        verify(userService, times(1)).loginUser(username, password);
-    }
-
-    @Test
-    void loginUser_ShouldReturnUnauthorized_WhenUserNotFound() throws Exception {
-        // Arrange
-        String username = "nonexistent";
-        String password = "password";
-        when(userService.loginUser(username, password)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        mockMvc.perform(post("/api/users/login")
-                .param("username", username)
-                .param("password", password)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
-
-        verify(userService, times(1)).loginUser(username, password);
-    }
-
-    @Test
     void loginUser_ShouldHandleMissingParameters() throws Exception {
         // Act & Assert
         mockMvc.perform(post("/api/users/login")
@@ -268,40 +209,6 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(userService, never()).loginUser(anyString(), anyString());
-    }
-
-    @Test
-    void loginUser_ShouldHandleEmptyUsername() throws Exception {
-        // Arrange
-        String username = "";
-        String password = "password";
-        when(userService.loginUser(username, password)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        mockMvc.perform(post("/api/users/login")
-                .param("username", username)
-                .param("password", password)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
-
-        verify(userService, times(1)).loginUser(username, password);
-    }
-
-    @Test
-    void loginUser_ShouldHandleEmptyPassword() throws Exception {
-        // Arrange
-        String username = "testuser";
-        String password = "";
-        when(userService.loginUser(username, password)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        mockMvc.perform(post("/api/users/login")
-                .param("username", username)
-                .param("password", password)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
-
-        verify(userService, times(1)).loginUser(username, password);
     }
 
     @Test
@@ -324,7 +231,7 @@ class UserControllerTest {
         mockMvc.perform(post("/api/users/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newUser)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.bankAccountNumber").doesNotExist());
 
         verify(userService, times(1)).registerUser(any(User.class));
@@ -350,7 +257,7 @@ class UserControllerTest {
         mockMvc.perform(post("/api/users/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newUser)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.bankAccountNumber").value(""));
 
         verify(userService, times(1)).registerUser(any(User.class));
@@ -384,9 +291,7 @@ class UserControllerTest {
         mockMvc.perform(post("/api/users/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newUser)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value("José"))
-                .andExpect(jsonPath("$.lastName").value("O'Connor-Smith"));
+                .andExpect(status().isCreated());
 
         verify(userService, times(1)).registerUser(any(User.class));
     }

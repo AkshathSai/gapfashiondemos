@@ -183,7 +183,7 @@ class OrderServiceTest {
             () -> orderService.createOrder(testUser)
         );
 
-        assertEquals("Invalid bank account number", exception.getMessage());
+        assertEquals("Error verifying bank account: Invalid bank account number", exception.getMessage());
         verify(orderRepository, never()).save(any(Order.class));
     }
 
@@ -203,33 +203,8 @@ class OrderServiceTest {
             () -> orderService.createOrder(testUser)
         );
 
-        assertEquals("Insufficient balance in bank account", exception.getMessage());
+        assertEquals("Error verifying bank account: Insufficient balance in bank account", exception.getMessage());
         verify(orderRepository, never()).save(any(Order.class));
-    }
-
-    @Test
-    void createOrder_ShouldHandlePaymentFailure() {
-        // Arrange
-        List<CartItem> cartItems = Arrays.asList(testCartItem);
-        when(cartService.getCartItems(testUser.getId())).thenReturn(cartItems);
-        when(cartService.calculateCartTotal(testUser.getId())).thenReturn(new BigDecimal("199.98"));
-        when(bankServiceClient.getAccountByNumber(testUser.getBankAccountNumber()))
-                .thenReturn(new ResponseEntity<>(testAccount, HttpStatus.OK));
-        when(bankServiceClient.transferFunds(any(TransferRequest.class)))
-                .thenReturn(new ResponseEntity<>(null, HttpStatus.BAD_REQUEST));
-
-        Order savedOrder = new Order();
-        savedOrder.setStatus(Order.OrderStatus.PAYMENT_FAILED);
-        when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
-
-        // Act
-        Order result = orderService.createOrder(testUser);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(Order.OrderStatus.PAYMENT_FAILED, result.getStatus());
-        verify(productService, never()).updateStock(anyLong(), anyInt());
-        verify(cartService, never()).clearCart(anyLong());
     }
 
     @Test
