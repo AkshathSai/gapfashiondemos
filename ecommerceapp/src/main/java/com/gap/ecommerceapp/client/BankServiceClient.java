@@ -7,7 +7,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@FeignClient(name = "bank-service", url = "${bank.service.url}")
+@FeignClient(name = "BankApp")
 public interface BankServiceClient {
 
     @GetMapping("/api/accounts/{accountNumber}")
