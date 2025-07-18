@@ -1,7 +1,6 @@
 package com.gap.ecommerceapp.service;
 
 import com.gap.ecommerceapp.client.BankServiceClient;
-import com.gap.ecommerceapp.dto.Account;
 import com.gap.ecommerceapp.dto.OrderResult;
 import com.gap.ecommerceapp.dto.Transaction;
 import com.gap.ecommerceapp.dto.TransferRequest;
@@ -40,32 +39,13 @@ public class OrderService {
             return OrderResult.error("Cart is empty");
         }
 
-        // Verify user has a bank account
-        if (user.getBankAccountNumber() == null || user.getBankAccountNumber().trim().isEmpty()) {
-            if (bankAccountNumber == null) {
-                return OrderResult.error("User must have a bank account number to place an order");
-            }
-            user.setBankAccountNumber(bankAccountNumber);
-            userService.updateUser(user);
-        }
-
         // Calculate total amount
         BigDecimal totalAmount = cartService.calculateCartTotal(user.getId());
 
-        // Verify account exists and has sufficient balance using OpenFeign
-        try {
-            ResponseEntity<Account> accountResponse = bankServiceClient.getAccountByNumber(user.getBankAccountNumber());
-            if (!accountResponse.getStatusCode().is2xxSuccessful() || accountResponse.getBody() == null) {
-                return OrderResult.error("Invalid bank account number");
-            }
-
-            Account account = accountResponse.getBody();
-            if (account.getBalance().compareTo(totalAmount) < 0) {
-                return OrderResult.error("Insufficient balance in bank account. Required: $" + totalAmount + ", Available: $" + account.getBalance());
-            }
-        } catch (Exception e) {
-            log.error("Error verifying bank account: {}", e.getMessage());
-            return OrderResult.error("Error verifying bank account: " + e.getMessage());
+        // Ensure user has a bank account
+        OrderResult bankAccountValidation = ensureUserHasBankAccount(user, bankAccountNumber);
+        if (!bankAccountValidation.isSuccess()) {
+            return bankAccountValidation;
         }
 
         // Create order
@@ -109,6 +89,24 @@ public class OrderService {
             orderRepository.save(savedOrder);
             return OrderResult.error("Payment failed: " + paymentResult);
         }
+    }
+
+    private OrderResult ensureUserHasBankAccount(User user, String providedAccountNumber) {
+        // Check if user already has a bank account
+        if (user.getBankAccountNumber() != null && !user.getBankAccountNumber().trim().isEmpty()) {
+            return OrderResult.success(null);
+        }
+
+        // If no account in DB, check if one was provided
+        if (providedAccountNumber == null || providedAccountNumber.trim().isEmpty()) {
+            return OrderResult.error("User must have a bank account number to place an order");
+        }
+
+        // Save the provided account number
+        user.setBankAccountNumber(providedAccountNumber.trim());
+        userService.updateUser(user);
+
+        return OrderResult.success(null);
     }
 
     private String processPayment(Order order) {

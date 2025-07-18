@@ -24,7 +24,7 @@ public class OrderController {
 
     @PostMapping("/purchase/{userId}")
     public ResponseEntity<?> purchaseProducts(@PathVariable Long userId,
-                                             @RequestParam("bankAccountNumber") String bankAccountNumber) {
+                                             @RequestParam(required = false) String bankAccountNumber) {
         Optional<User> userOpt = userService.findById(userId);
         if (userOpt.isEmpty()) {
             return ResponseEntity.badRequest().body("User not found");
