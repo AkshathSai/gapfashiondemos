@@ -44,38 +44,38 @@ public class DemoController {
             newUser.setBankAccountNumber("2349885777"); // Use existing bank account
 
             User registeredUser = userService.registerUser(newUser);
-            result.put("1_user_registration", "✓ User registered: " + registeredUser.getUsername());
+            result.put("1_user_registration", "User registered: " + registeredUser.getUsername());
 
             // Step 2: Login
             Optional<User> loggedInUser = userService.loginUser(registeredUser.getUsername(), "password123");
-            result.put("2_user_login", loggedInUser.isPresent() ? "✓ Login successful" : "✗ Login failed");
+            result.put("2_user_login", loggedInUser.isPresent() ? "Login successful" : "✗ Login failed");
 
             // Step 3: Search products (without login required)
             List<Product> searchResults = productService.searchProducts("jacket");
-            result.put("3_product_search", "✓ Found " + searchResults.size() + " products matching 'jacket'");
+            result.put("3_product_search", "Found " + searchResults.size() + " products matching 'jacket'");
 
             // Step 4: Add products to cart
             if (!searchResults.isEmpty()) {
                 CartItem cartItem = cartService.addToCart(registeredUser, searchResults.get(0).getId(), 2);
-                result.put("4_add_to_cart", "✓ Added " + cartItem.getProduct().getName() + " to cart");
+                result.put("4_add_to_cart", "Added " + cartItem.getProduct().getName() + " to cart");
             }
 
             // Step 5: Verify bank account before purchase
             ResponseEntity<Account> accountResponse = bankServiceClient.getAccountByNumber(registeredUser.getBankAccountNumber());
             if (accountResponse.getStatusCode().is2xxSuccessful()) {
                 Account account = accountResponse.getBody();
-                result.put("5_bank_verification", "✓ Bank account verified. Balance: $" + account.getBalance());
+                result.put("5_bank_verification", "Bank account verified. Balance: $" + account.getBalance());
             }
 
             // Step 6: Purchase products (OpenFeign integration) - Updated to handle OrderResult
             OrderResult orderResult = orderService.createOrder(registeredUser, null);
             if (orderResult.isSuccess()) {
                 Order order = orderResult.getOrder();
-                result.put("6_purchase", "✓ Order created: " + order.getOrderNumber() +
+                result.put("6_purchase", "Order created: " + order.getOrderNumber() +
                           " | Status: " + order.getStatus() +
                           " | Total: $" + order.getTotalAmount());
             } else {
-                result.put("6_purchase", "✗ Order failed: " + orderResult.getErrorMessage());
+                result.put("6_purchase", "Order failed: " + orderResult.getErrorMessage());
             }
 
             // Step 7: Dashboard - get monthly orders
@@ -84,7 +84,7 @@ public class DemoController {
             LocalDateTime endDate = currentMonth.atEndOfMonth().atTime(23, 59, 59);
 
             List<Order> monthlyOrders = orderService.getOrdersByDateRange(registeredUser.getId(), startDate, endDate);
-            result.put("7_dashboard", "✓ Monthly orders retrieved: " + monthlyOrders.size() + " orders");
+            result.put("7_dashboard", "Monthly orders retrieved: " + monthlyOrders.size() + " orders");
 
             result.put("status", "SUCCESS");
             result.put("message", "Complete e-commerce flow with OpenFeign bank integration demonstrated successfully!");
