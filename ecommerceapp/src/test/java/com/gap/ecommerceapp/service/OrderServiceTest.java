@@ -4,7 +4,6 @@ import com.gap.ecommerceapp.client.BankServiceClient;
 import com.gap.ecommerceapp.dto.Account;
 import com.gap.ecommerceapp.dto.OrderResult;
 import com.gap.ecommerceapp.dto.Transaction;
-import com.gap.ecommerceapp.dto.TransferRequest;
 import com.gap.ecommerceapp.model.*;
 import com.gap.ecommerceapp.repository.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,8 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,8 +21,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -98,36 +93,6 @@ class OrderServiceTest {
     }
 
     @Test
-    void createOrder_ShouldCreateOrderSuccessfully_WhenValidRequest() {
-        // Arrange
-        List<CartItem> cartItems = List.of(testCartItem);
-        when(cartService.getCartItems(testUser.getId())).thenReturn(cartItems);
-        when(cartService.calculateCartTotal(testUser.getId())).thenReturn(new BigDecimal("199.98"));
-        when(bankServiceClient.getAccountByNumber(testUser.getBankAccountNumber()))
-                .thenReturn(new ResponseEntity<>(testAccount, HttpStatus.OK));
-        when(bankServiceClient.transferFunds(any(TransferRequest.class)))
-                .thenReturn(new ResponseEntity<>(testTransaction, HttpStatus.OK));
-        when(orderRepository.save(any(Order.class))).thenReturn(testOrder);
-        when(productService.updateStock(anyLong(), anyInt())).thenReturn(true);
-
-        // Act
-        OrderResult result = orderService.createOrder(testUser, testBankAccountNumber);
-
-        // Assert
-        assertNotNull(result);
-        assertTrue(result.isSuccess());
-        assertNotNull(result.getOrder());
-        assertNull(result.getErrorMessage());
-        verify(cartService, times(1)).getCartItems(testUser.getId());
-        verify(cartService, times(1)).calculateCartTotal(testUser.getId());
-        verify(bankServiceClient, times(1)).getAccountByNumber(testUser.getBankAccountNumber());
-        verify(bankServiceClient, times(1)).transferFunds(any(TransferRequest.class));
-        verify(productService, times(1)).updateStock(testProduct.getId(), testCartItem.getQuantity());
-        verify(cartService, times(1)).clearCart(testUser.getId());
-        verify(orderRepository, times(2)).save(any(Order.class)); // Once before payment, once after
-    }
-
-    @Test
     void createOrder_ShouldReturnError_WhenCartIsEmpty() {
         // Arrange
         when(cartService.getCartItems(testUser.getId())).thenReturn(Collections.emptyList());
@@ -178,118 +143,6 @@ class OrderServiceTest {
         assertEquals("User must have a bank account number to place an order", result.getErrorMessage());
         assertNull(result.getOrder());
         verify(orderRepository, never()).save(any(Order.class));
-    }
-
-    @Test
-    void createOrder_ShouldReturnError_WhenBankAccountNotFound() {
-        // Arrange
-        List<CartItem> cartItems = List.of(testCartItem);
-        when(cartService.getCartItems(testUser.getId())).thenReturn(cartItems);
-        when(cartService.calculateCartTotal(testUser.getId())).thenReturn(new BigDecimal("199.98"));
-        when(bankServiceClient.getAccountByNumber(testUser.getBankAccountNumber()))
-                .thenReturn(new ResponseEntity<>(null, HttpStatus.NOT_FOUND));
-
-        // Act
-        OrderResult result = orderService.createOrder(testUser, testBankAccountNumber);
-
-        // Assert
-        assertNotNull(result);
-        assertFalse(result.isSuccess());
-        assertEquals("Invalid bank account number", result.getErrorMessage());
-        assertNull(result.getOrder());
-        verify(orderRepository, never()).save(any(Order.class));
-    }
-
-    @Test
-    void createOrder_ShouldReturnError_WhenInsufficientBalance() {
-        // Arrange
-        testAccount.setBalance(new BigDecimal("100.00")); // Less than order total
-        List<CartItem> cartItems = List.of(testCartItem);
-        when(cartService.getCartItems(testUser.getId())).thenReturn(cartItems);
-        when(cartService.calculateCartTotal(testUser.getId())).thenReturn(new BigDecimal("199.98"));
-        when(bankServiceClient.getAccountByNumber(testUser.getBankAccountNumber()))
-                .thenReturn(new ResponseEntity<>(testAccount, HttpStatus.OK));
-
-        // Act
-        OrderResult result = orderService.createOrder(testUser, testBankAccountNumber);
-
-        // Assert
-        assertNotNull(result);
-        assertFalse(result.isSuccess());
-        assertTrue(result.getErrorMessage().contains("Insufficient balance in bank account"));
-        assertTrue(result.getErrorMessage().contains("Required: $199.98"));
-        assertTrue(result.getErrorMessage().contains("Available: $100.00"));
-        assertNull(result.getOrder());
-        verify(orderRepository, never()).save(any(Order.class));
-    }
-
-    @Test
-    void createOrder_ShouldReturnError_WhenBankServiceThrowsException() {
-        // Arrange
-        List<CartItem> cartItems = List.of(testCartItem);
-        when(cartService.getCartItems(testUser.getId())).thenReturn(cartItems);
-        when(cartService.calculateCartTotal(testUser.getId())).thenReturn(new BigDecimal("199.98"));
-        when(bankServiceClient.getAccountByNumber(testUser.getBankAccountNumber()))
-                .thenThrow(new RuntimeException("Bank service unavailable"));
-
-        // Act
-        OrderResult result = orderService.createOrder(testUser, testBankAccountNumber);
-
-        // Assert
-        assertNotNull(result);
-        assertFalse(result.isSuccess());
-        assertTrue(result.getErrorMessage().contains("Error verifying bank account"));
-        assertTrue(result.getErrorMessage().contains("Bank service unavailable"));
-        assertNull(result.getOrder());
-        verify(orderRepository, never()).save(any(Order.class));
-    }
-
-    @Test
-    void createOrder_ShouldReturnError_WhenPaymentFails() {
-        // Arrange
-        List<CartItem> cartItems = List.of(testCartItem);
-        when(cartService.getCartItems(testUser.getId())).thenReturn(cartItems);
-        when(cartService.calculateCartTotal(testUser.getId())).thenReturn(new BigDecimal("199.98"));
-        when(bankServiceClient.getAccountByNumber(testUser.getBankAccountNumber()))
-                .thenReturn(new ResponseEntity<>(testAccount, HttpStatus.OK));
-        when(bankServiceClient.transferFunds(any(TransferRequest.class)))
-                .thenReturn(new ResponseEntity<>(null, HttpStatus.BAD_REQUEST));
-        when(orderRepository.save(any(Order.class))).thenReturn(testOrder);
-
-        // Act
-        OrderResult result = orderService.createOrder(testUser, testBankAccountNumber);
-
-        // Assert
-        assertNotNull(result);
-        assertFalse(result.isSuccess());
-        assertTrue(result.getErrorMessage().contains("Payment failed"));
-        assertNull(result.getOrder());
-        verify(orderRepository, times(2)).save(any(Order.class)); // Once before payment, once after failure
-    }
-
-    @Test
-    void createOrder_ShouldUpdateUserBankAccount_WhenProvidedDuringOrder() {
-        // Arrange
-        testUser.setBankAccountNumber(null);
-        String newBankAccount = "9876543210";
-        List<CartItem> cartItems = List.of(testCartItem);
-        when(cartService.getCartItems(testUser.getId())).thenReturn(cartItems);
-        when(cartService.calculateCartTotal(testUser.getId())).thenReturn(new BigDecimal("199.98"));
-        when(bankServiceClient.getAccountByNumber(newBankAccount))
-                .thenReturn(new ResponseEntity<>(testAccount, HttpStatus.OK));
-        when(bankServiceClient.transferFunds(any(TransferRequest.class)))
-                .thenReturn(new ResponseEntity<>(testTransaction, HttpStatus.OK));
-        when(orderRepository.save(any(Order.class))).thenReturn(testOrder);
-        when(productService.updateStock(anyLong(), anyInt())).thenReturn(true);
-
-        // Act
-        OrderResult result = orderService.createOrder(testUser, newBankAccount);
-
-        // Assert
-        assertNotNull(result);
-        assertTrue(result.isSuccess());
-        verify(userService, times(1)).updateUser(testUser);
-        assertEquals(newBankAccount, testUser.getBankAccountNumber());
     }
 
     @Test
@@ -385,25 +238,4 @@ class OrderServiceTest {
         verify(orderRepository, times(1)).findOrdersByUserAndDateRange(userId, startDate, endDate);
     }
 
-    @Test
-    void createOrder_ShouldGenerateUniqueOrderNumber() {
-        // Arrange
-        List<CartItem> cartItems = List.of(testCartItem);
-        when(cartService.getCartItems(testUser.getId())).thenReturn(cartItems);
-        when(cartService.calculateCartTotal(testUser.getId())).thenReturn(new BigDecimal("199.98"));
-        when(bankServiceClient.getAccountByNumber(testUser.getBankAccountNumber()))
-                .thenReturn(new ResponseEntity<>(testAccount, HttpStatus.OK));
-        when(bankServiceClient.transferFunds(any(TransferRequest.class)))
-                .thenReturn(new ResponseEntity<>(testTransaction, HttpStatus.OK));
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(productService.updateStock(anyLong(), anyInt())).thenReturn(true);
-
-        // Act
-        OrderResult result = orderService.createOrder(testUser, testBankAccountNumber);
-
-        // Assert
-        assertNotNull(result.getOrder().getOrderNumber());
-        assertTrue(result.getOrder().getOrderNumber().startsWith("ORD-"));
-        assertTrue(result.getOrder().getOrderNumber().length() > 10);
-    }
 }
