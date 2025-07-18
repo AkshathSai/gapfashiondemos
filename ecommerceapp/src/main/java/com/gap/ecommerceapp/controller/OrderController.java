@@ -1,5 +1,6 @@
 package com.gap.ecommerceapp.controller;
 
+import com.gap.ecommerceapp.dto.OrderResult;
 import com.gap.ecommerceapp.model.Order;
 import com.gap.ecommerceapp.model.User;
 import com.gap.ecommerceapp.service.OrderService;
@@ -22,17 +23,19 @@ public class OrderController {
     private final UserService userService;
 
     @PostMapping("/purchase/{userId}")
-    public ResponseEntity<Order> purchaseProducts(@PathVariable Long userId) {
-        try {
-            Optional<User> userOpt = userService.findById(userId);
-            if (userOpt.isEmpty()) {
-                return ResponseEntity.badRequest().build();
-            }
+    public ResponseEntity<?> purchaseProducts(@PathVariable Long userId,
+                                             @RequestParam("bankAccountNumber") String bankAccountNumber) {
+        Optional<User> userOpt = userService.findById(userId);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("User not found");
+        }
 
-            Order order = orderService.createOrder(userOpt.get());
-            return ResponseEntity.ok(order);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+        OrderResult result = orderService.createOrder(userOpt.get(), bankAccountNumber);
+
+        if (result.isSuccess()) {
+            return ResponseEntity.ok(result.getOrder());
+        } else {
+            return ResponseEntity.badRequest().body(result.getErrorMessage());
         }
     }
 

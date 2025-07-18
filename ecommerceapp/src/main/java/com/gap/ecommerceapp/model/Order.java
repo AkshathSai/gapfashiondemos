@@ -1,17 +1,15 @@
 package com.gap.ecommerceapp.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "orders")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
@@ -38,9 +36,6 @@ public class Order {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrderItem> orderItems;
 
     @PrePersist
     protected void onCreate() {

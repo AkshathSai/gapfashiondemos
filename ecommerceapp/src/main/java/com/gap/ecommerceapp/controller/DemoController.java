@@ -2,6 +2,7 @@ package com.gap.ecommerceapp.controller;
 
 import com.gap.ecommerceapp.client.BankServiceClient;
 import com.gap.ecommerceapp.dto.Account;
+import com.gap.ecommerceapp.dto.OrderResult;
 import com.gap.ecommerceapp.model.*;
 import com.gap.ecommerceapp.service.*;
 import lombok.RequiredArgsConstructor;
@@ -66,11 +67,16 @@ public class DemoController {
                 result.put("5_bank_verification", "✓ Bank account verified. Balance: $" + account.getBalance());
             }
 
-            // Step 6: Purchase products (OpenFeign integration)
-            Order order = orderService.createOrder(registeredUser);
-            result.put("6_purchase", "✓ Order created: " + order.getOrderNumber() +
-                      " | Status: " + order.getStatus() +
-                      " | Total: $" + order.getTotalAmount());
+            // Step 6: Purchase products (OpenFeign integration) - Updated to handle OrderResult
+            OrderResult orderResult = orderService.createOrder(registeredUser, null);
+            if (orderResult.isSuccess()) {
+                Order order = orderResult.getOrder();
+                result.put("6_purchase", "✓ Order created: " + order.getOrderNumber() +
+                          " | Status: " + order.getStatus() +
+                          " | Total: $" + order.getTotalAmount());
+            } else {
+                result.put("6_purchase", "✗ Order failed: " + orderResult.getErrorMessage());
+            }
 
             // Step 7: Dashboard - get monthly orders
             YearMonth currentMonth = YearMonth.now();

@@ -1,15 +1,14 @@
 package com.gap.ecommerceapp.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "order_items")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderItem {
@@ -18,11 +17,11 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
@@ -31,8 +30,4 @@ public class OrderItem {
 
     @Column(name = "unit_price", nullable = false)
     private BigDecimal unitPrice;
-
-    public BigDecimal getTotalPrice() {
-        return unitPrice.multiply(BigDecimal.valueOf(quantity));
-    }
 }
