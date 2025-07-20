@@ -1,5 +1,6 @@
 package com.gap.ecommerceapp.controller;
 
+import com.gap.ecommerceapp.dto.LoginRequest;
 import com.gap.ecommerceapp.model.User;
 import com.gap.ecommerceapp.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,7 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<User> loginUser(@RequestBody LoginRequest loginRequest) {
-        Optional<User> user = userService.loginUser(loginRequest.getUsername(), loginRequest.getPassword());
+        Optional<User> user = userService.loginUser(loginRequest.getEmail(), loginRequest.getPassword());
         if (user.isPresent()) {
             return ResponseEntity.ok(user.get());
         }
@@ -49,13 +50,4 @@ public class UserController {
                   .orElse(ResponseEntity.notFound().build());
     }
 
-    public static class LoginRequest {
-        private String username;
-        private String password;
-
-        public String getUsername() { return username; }
-        public void setUsername(String username) { this.username = username; }
-        public String getPassword() { return password; }
-        public void setPassword(String password) { this.password = password; }
-    }
 }

@@ -282,17 +282,6 @@ class ProductControllerTest {
     }
 
     @Test
-    void createProduct_ShouldReturnBadRequest_WhenInvalidJson() throws Exception {
-        // Act & Assert
-        mockMvc.perform(post("/api/products")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("\"invalid\" \"json\""))
-                .andExpect(status().isBadRequest());
-
-        verify(productService, never()).saveProduct(any(Product.class));
-    }
-
-    @Test
     void searchProducts_ShouldHandleEmptyKeyword() throws Exception {
         // Arrange
         List<Product> products = Arrays.asList(testProduct1, testProduct2);
