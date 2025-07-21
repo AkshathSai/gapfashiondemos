@@ -19,28 +19,28 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleResourceNotFoundException(
             ResourceNotFoundException ex, WebRequest request) {
         log.error("Resource not found: {}", ex.getMessage());
-        return createErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND, request.getDescription(false));
+        return createErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND, request.getContextPath());
     }
 
     @ExceptionHandler(InsufficientStockException.class)
     public ResponseEntity<Map<String, Object>> handleInsufficientStockException(
             InsufficientStockException ex, WebRequest request) {
         log.error("Insufficient stock: {}", ex.getMessage());
-        return createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request.getDescription(false));
+        return createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request.getContextPath());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(
             IllegalArgumentException ex, WebRequest request) {
         log.error("Invalid argument: {}", ex.getMessage());
-        return createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request.getDescription(false));
+        return createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request.getContextPath());
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalStateException(
             IllegalStateException ex, WebRequest request) {
         log.error("Invalid state: {}", ex.getMessage());
-        return createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request.getDescription(false));
+        return createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request.getContextPath());
     }
 
     @ExceptionHandler(Exception.class)
