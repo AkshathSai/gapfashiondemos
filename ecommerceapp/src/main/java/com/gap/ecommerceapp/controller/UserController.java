@@ -40,7 +40,7 @@ public class UserController {
         if (user.isPresent()) {
             return ResponseEntity.ok(user.get());
         }
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(401).build();
     }
 
     @GetMapping("/{id}")

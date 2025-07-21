@@ -79,6 +79,7 @@ public class CartService {
             }
 
             cartItem.setQuantity(newQuantity);
+            cartItem.setUnitPrice(product.getPrice()); // Set unit price for existing items
         } else {
             cartItem = new CartItem();
             cartItem.setCart(cart);
