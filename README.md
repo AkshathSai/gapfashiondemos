@@ -14,6 +14,8 @@ MacOS
 brew services start zookeeper
 brew services start kafka
 kafka-topics --create --topic test --bootstrap-server localhost:9092 --partitions 2 --replication-factor 1
+# Verify topics
+kafka-topics --list --bootstrap-server localhost:9092
 ````
 
 ## Features Implemented
