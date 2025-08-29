@@ -8,6 +8,14 @@ This project demonstrates a complete e-commerce application integrated with a ba
 - **BankApp** (Port 8080): Banking service for payment processing
 - **Integration**: OpenFeign client for seamless communication
 
+## Local setup with Kafka
+MacOS
+````bash
+brew services start zookeeper
+brew services start kafka
+kafka-topics --create --topic test --bootstrap-server localhost:9092 --partitions 2 --replication-factor 1
+````
+
 ## Features Implemented
 
 ### E-Commerce Application Features
