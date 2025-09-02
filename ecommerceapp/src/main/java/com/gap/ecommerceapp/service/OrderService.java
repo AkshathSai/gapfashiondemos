@@ -9,6 +9,7 @@ import com.gap.ecommerceapp.client.BankServiceClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,8 @@ public class OrderService {
     private final ProductService productService;
     private final UserService userService;
     private final BankServiceClient bankServiceClient;
+    private final String ORDERS_TOPIC = "orders";
+    private final KafkaTemplate<String, OrderResponse> kafkaTemplate;
 
     // E-commerce company bank account for receiving payments
     private static final String GAP_ECOMMERCE_BANK_ACCOUNT = "1349885778";
@@ -85,6 +88,9 @@ public class OrderService {
         if (transactionId != null && !transactionId.startsWith("ERROR")) {
             order.setStatus(Order.OrderStatus.CONFIRMED);
             order.setPaymentTransactionId(transactionId);
+            log.info("Order confirmed: {}, transaction: {}", order.getId(), transactionId);
+            var orderResponse = convertToOrderResponse(order);
+            kafkaTemplate.send(ORDERS_TOPIC, orderResponse);
 
             // Clear cart after successful order
             cartItemRepository.deleteByUserId(request.getUserId());
