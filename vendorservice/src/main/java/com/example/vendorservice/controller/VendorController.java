@@ -4,6 +4,7 @@ import com.example.vendorservice.dto.FoodItem;
 import com.example.vendorservice.dto.Vendor;
 import com.example.vendorservice.service.KafkaFoodItemProducer;
 import com.example.vendorservice.service.VendorService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +35,7 @@ public class VendorController {
     }
 
     @PostMapping("/vendors")
-    public ResponseEntity<Vendor> addVendor(Vendor vendor) {
+    public ResponseEntity<Vendor> addVendor(@Valid @RequestBody Vendor vendor) {
         var savedVendorDetails = vendorService.addVendor(vendor);
         return ResponseEntity.created(URI.create("/vendors/" + savedVendorDetails.getId()))
                 .body(savedVendorDetails);
