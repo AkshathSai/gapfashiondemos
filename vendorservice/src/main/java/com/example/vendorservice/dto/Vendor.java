@@ -18,4 +18,6 @@ public class Vendor {
     private String phoneNumber;
     @NotEmpty(message = "Address is required")
     private String address;
+    @NotEmpty(message = "Password is required")
+    private String password;
 }
