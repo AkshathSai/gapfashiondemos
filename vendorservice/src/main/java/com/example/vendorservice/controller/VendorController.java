@@ -42,7 +42,7 @@ public class VendorController {
     }
 
     @PostMapping("/food")
-    public ResponseEntity<String> addFoodItem(@RequestBody FoodItem foodItem) {
+    public ResponseEntity<String> addFoodItem(@Valid @RequestBody FoodItem foodItem) {
         kafkaFoodItemProducer.addFoodItem(foodItem);
         return ResponseEntity.ok("Add Food item event posted successfully");
     }
